@@ -3,4 +3,4 @@ Search for Operators that act as Clifford's in Pauli Subspaces
 
 Based on work in [link](https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.125.030502).
 
-Using a QuantumGate class this construct a universal pool from H, CNOT, T gates with max depth proportional to approximation error ({\displaystyle O(m\log ^{c}(m/\varepsilon ))}, solovay-kitaev) and checks if these operators behave as Clifford gates in this space.
+Using a QuantumGate class this construct a universal pool from H, CNOT, T gates with max depth proportional to approximation error (solovay-kitaev) and checks if these operators behave as Clifford gates in this space.
