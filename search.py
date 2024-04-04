@@ -13,12 +13,12 @@ def gen_pauli_strings(subspace_str, n):
         subspace_str) == str, "Op_str input should be a string of operators to include, e.g. 'XY' "
     assert type(
         n) == int, "n input should the an integers equal to the number of qubits in the system"
-    return [p for p in product(list(subspace_str) , repeat=n)] # return cartesian product (size=n) of provided operators 
+    return [p for p in product(list(subspace_str) , repeat=n)] # return cartesian product (size=n) of provided operators
 
 def gen_pauli_basis(n):
     assert type(
         n) == int, "n input should the an integers equal to the number of qubits in the system"
-    pauli_space = gen_pauli_strings('XYZI', n) 
+    pauli_space = gen_pauli_strings('XYZI', n)
     return dict((l, nQuantumGate(l, n)) for l in pauli_space)  # returns dictionary {"stringXXX...": matrix,....}
     
 def gen_subspace_basis(op_str, n):
@@ -40,11 +40,11 @@ def calc_super_op(n, trial_op, basis_ops):
     super_op = np.zeros((2**n, 2**n), dtype=complex)
     column = 0
     for base1 in subspace.values():
-        transformed_base = np.transpose(np.conj(trial_op)) @ base1.construct_n_gate() @ trial_op
+        transformed_base = np.transpose(np.conj(trial_op)) @ base1.construct_gate() @ trial_op
         row = 0
         for base2 in subspace.values():
             # find new coefficient of base (1/2**n tr(base' * base))
-            coeff = ((1 / 2 ** n) * np.trace(transformed_base @ base2.construct_n_gate()))
+            coeff = ((1 / 2 ** n) * np.trace(transformed_base @ base2.construct_gate()))
             super_op[row][column] = coeff
             row += 1
         column += 1
@@ -58,7 +58,7 @@ def approximately_equal(u1, u2, error):
         u2) == np.ndarray, "u2 input should be an np.array of dim 2**n x 2**n"
     assert u1.shape == u2.shape, "u1 and u2 must have the same shape"
     assert type(error) == float, "error input should be a float value"
-    return np.allclose(u1, u2, atol = error) 
+    return np.allclose(u1, u2, atol = error)
 
 # Defines 2**n orthonormal basis vectors in Hilbert space
 def gen_ONB(n):
@@ -98,12 +98,12 @@ def add_control_gates(pool, n, op_str):
         n) == int, "Input n should be an integer equal to the number of qubits in the system"
     assert type(pool) == dict, "Input pool should be a dictionary"
     assert type(
-        op_str) == str and op_str in ['X', 'Y', 'Z'], "input op_str should be string in ['X','Y','Z']" 
+        op_str) == str and op_str in ['X', 'Y', 'Z'], "input op_str should be string in ['X','Y','Z']"
     cont_pool = dict()
     for i in range(n):
         for j in range(n):
             if i != j:
-                cont_pool["C_"+str(i)+str(j)] = ControlGate(op_str, n, cont = i+1, targ = j+1)    
+                cont_pool["C_"+str(i)+str(j)] = ControlGate(op_str, n, cont = i+1, targ = j+1)
     return pool | cont_pool
 
 # CONDITION 1: must conserve commutation relations
@@ -116,9 +116,9 @@ def check_preserves_comm(n, op, basis_ops, error):
     basis = gen_subspace_basis(basis_ops, n)
     bool_preserved = True
     for b1 in basis.values():
-        b1_arr = b1.construct_n_gate()
+        b1_arr = b1.construct_gate()
         for b2 in basis.values():
-            b2_arr = b2.construct_n_gate()
+            b2_arr = b2.construct_gate()
             initial_comm = b1_arr @ b2_arr @ b1_arr @ b2_arr
             transformed_comm = (np.transpose(np.conj(op)) @ b1_arr @ op) @ (np.transpose(np.conj(op)) @ b2_arr @ op) @ (
                 np.transpose(np.conj(op)) @ b1_arr @ op) @ (np.transpose(np.conj(op)) @ b2_arr @ op)
@@ -137,9 +137,9 @@ def check_preserves_space(n, op, basis_ops, error):
     basis = gen_subspace_basis(basis_ops, n)
     bool_clifford = True
     for test in basis.values():
-        test_arr = test.construct_n_gate()
+        test_arr = test.construct_gate()
         out = np.transpose(np.conj(op)) @ test_arr @ op
-        basis_sum = sum(((1 / 2 ** n) * np.trace(out @ base.construct_n_gate()))*base.construct_n_gate() for base in basis.values())
+        basis_sum = sum(((1 / 2 ** n) * np.trace(out @ base.construct_gate()))*base.construct_gate() for base in basis.values())
         # if not fully repesented in subspace basis
         if not approximately_equal(basis_sum, out, error):
             bool_clifford = False
@@ -170,7 +170,7 @@ def check_takes_pauli_string_to_pauli_string(n, op, basis_ops,  error, return_tr
     
     for lx, x in xs.items():
 
-        x_arr = x.construct_n_gate()
+        x_arr = x.construct_gate()
 
         out = np.transpose(np.conj(s_op)) @ x_arr @ s_op # C_dag X C
 
@@ -178,7 +178,7 @@ def check_takes_pauli_string_to_pauli_string(n, op, basis_ops,  error, return_tr
 
         for kp, p in pauli_strings.items():
 
-            p_arr = p.construct_n_gate()
+            p_arr = p.construct_gate()
             
             if np.isclose((1 / 2**n) * np.trace(p_arr @ out), 1, error) or np.isclose((1 / 2**n) * np.trace(p_arr @ out), -1, error):
                 
@@ -194,7 +194,7 @@ def check_takes_pauli_string_to_pauli_string(n, op, basis_ops,  error, return_tr
 
         for lz, z in zs.items():
 
-            z_arr = z.construct_n_gate()
+            z_arr = z.construct_gate()
 
             out = np.transpose(np.conj(s_op)) @ z_arr @ s_op # C_dag X C
             
@@ -202,9 +202,9 @@ def check_takes_pauli_string_to_pauli_string(n, op, basis_ops,  error, return_tr
 
             for kp, p in pauli_strings.items():
                 
-                p_arr = p.construct_n_gate()
+                p_arr = p.construct_gate()
 
-                if np.isclose((1 / 2**n) * np.trace(p_arr @ out), 1, error) or np.isclose((1 / 2**n) * np.trace(p_arr @ out), -1, error):    
+                if np.isclose((1 / 2**n) * np.trace(p_arr @ out), 1, error) or np.isclose((1 / 2**n) * np.trace(p_arr @ out), -1, error):
                     
                     transforms.update({lz: kp})
                     found = True
@@ -235,7 +235,7 @@ def check_clifford(n, op, op_basis, error):
 
 # Form all possible unitaries from circuit depth restricted universal set
 def trial_op_strings(pool, max_depth):
-    return [p for p in product(list(pool.keys()) , repeat=max_depth)] # return cartesian product (size=n) of provided operators 
+    return [p for p in product(list(pool.keys()) , repeat=max_depth)] # return cartesian product (size=n) of provided operators
 
 def trial_ops(n, pool, max_depth):
     
@@ -246,9 +246,9 @@ def trial_ops(n, pool, max_depth):
         temp_circuit = np.eye(2**n)
         for op_desc in circuit_string:
             if isinstance(pool[op_desc], ControlGate):
-                temp_circuit = temp_circuit @ pool[op_desc].construct_control_gate()
+                temp_circuit = temp_circuit @ pool[op_desc].construct_gate()
             else:
-                temp_circuit = temp_circuit @ pool[op_desc].construct_n_gate()
+                temp_circuit = temp_circuit @ pool[op_desc].construct_gate()
         trial_circuits.append(temp_circuit)
 
     return dict(zip(trial_circuit_string, trial_circuits))
