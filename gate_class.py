@@ -52,7 +52,7 @@ class QuantumGate:
         assert self.array.shape == (2,2) # this class construct single qubit gates
         return self.array.shape
 
-    def construct_1qubit_gate(self, op_name = None) -> np.array:
+    def construct_gate(self, op_name = None) -> np.array:
         if op_name is None:
             name = self.name
         else:
@@ -97,16 +97,16 @@ class nQuantumGate(QuantumGate):
         assert self.array.shape == (cod,cod), "input array is not (2**n, 2**n) for n qubits"
         return self.array.shape
 
-    def construct_n_gate(self) -> np.array:
+    def construct_gate(self) -> np.array:
         if len(self.name) == 1:
             pauli_string = "".join('I' if i != (self.targ-1) else self.name for i in range(self.nqb))
         else:
             pauli_string = self.name
-        for i in range(self.nqb): 
+        for i in range(self.nqb):
             if i == 0:
-                b = super().construct_1qubit_gate(pauli_string[i])
-            else: 
-                c = super().construct_1qubit_gate(pauli_string[i])
+                b = super().construct_gate(pauli_string[i])
+            else:
+                c = super().construct_gate(pauli_string[i])
                 b = np.kron(b, c)
         self.array = b
         return self.array
@@ -130,15 +130,15 @@ class ControlGate(QuantumGate):
         assert self.array.shape == (cod,cod), "input array is not (2**n, 2**n) for n qubits"
         return self.array.shape
 
-    def construct_control_gate(self) -> np.array:
+    def construct_gate(self) -> np.array:
         
         cod = 2 ** self.nqb
         bin_rep = [np.binary_repr(i, width=self.nqb) for i in range(cod)]
         bin_states = gen_ONB(self.nqb)
         
-        C_ij = np.zeros((cod, cod)) 
+        C_ij = np.zeros((cod, cod))
 
-        for b in bin_rep:  # basis state representation 
+        for b in bin_rep:  # basis state representation
 
             if b[self.cont-1] == '0':  # if basis state has control = 0 apply I*| b > < b|
 
@@ -147,11 +147,11 @@ class ControlGate(QuantumGate):
 
             elif b[self.cont-1] == '1':  # if basis state has control = 1 apply Xj * | b > < b |
                 
-                op = nQuantumGate(self.name, self.nqb, targ=self.targ).construct_n_gate() 
-                transform_basis = op @ bin_states["base" + str(b)]      
+                op = nQuantumGate(self.name, self.nqb, targ=self.targ).construct_gate()
+                transform_basis = op @ bin_states["base" + str(b)]
                 
                 C_ij = np.add(C_ij, np.outer(
-                    transform_basis, np.transpose(bin_states["base" + str(b)]))) 
+                    transform_basis, np.transpose(bin_states["base" + str(b)])))
         
         self.array = C_ij
         return self.array
@@ -159,4 +159,4 @@ class ControlGate(QuantumGate):
     def __str__(self) -> str:
         return f'{self.nqb}-qubit control {self.name} gate called acting on qubit {self.targ} with control qubit {self.cont}'
 
-# note: class ParameterisedGate(QuantumGate) would require **params and .sub function .eval 
+# note: class ParameterisedGate(QuantumGate) would require **params and .sub function .eval
